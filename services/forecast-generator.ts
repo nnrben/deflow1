@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import axios from 'axios';
 import https from 'https';
+import { v4 as uuidv4 } from 'uuid';
 
 const prisma = new PrismaClient();
 
@@ -61,11 +62,12 @@ async function ensureGigaChatToken() {
             'https://ngw.devices.sberbank.ru:9443/api/v2/oauth',
             params.toString(),
             {
-                httpsAgent, // используем агент без проверки сертификатов
+                httpsAgent,
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'Accept': 'application/json',
                     'Authorization': `Basic ${Buffer.from(`${GIGACHAT_CLIENT_ID}:${GIGACHAT_CLIENT_SECRET}`).toString('base64')}`,
+                    'RqUID': uuidv4(), // уникальный UUID для каждого запроса
                 },
             }
         );
