@@ -7,7 +7,7 @@ const parser = new Parser();
 
 const RSS_FEEDS = [
     // Российские источники
-    'https://lenta.ru/rss/news',           
+    'https://lenta.ru/rss/top7',           
 
 ];
 
