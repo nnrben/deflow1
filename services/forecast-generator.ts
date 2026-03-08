@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import axios from 'axios';
+import https from 'https';
 
 const prisma = new PrismaClient();
 
@@ -39,7 +40,12 @@ try {
     process.exit(1);
 }
 
-// Токен доступа GigaChat (получаем при каждом запуске и обновляем по необходимости)
+// Создаём агент HTTPS, который не проверяет сертификаты (для самоподписанных сертификатов Сбера)
+const httpsAgent = new https.Agent({
+    rejectUnauthorized: false
+});
+
+// Токен доступа GigaChat
 let gigachatAccessToken: string | null = null;
 let tokenExpiresAt = 0;
 
@@ -55,6 +61,7 @@ async function ensureGigaChatToken() {
             'https://ngw.devices.sberbank.ru:9443/api/v2/oauth',
             params.toString(),
             {
+                httpsAgent, // используем агент без проверки сертификатов
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'Accept': 'application/json',
@@ -64,7 +71,7 @@ async function ensureGigaChatToken() {
         );
 
         gigachatAccessToken = response.data.access_token;
-        tokenExpiresAt = Date.now() + (response.data.expires_at ? response.data.expires_at * 1000 : 30 * 60 * 1000); // fallback 30 мин
+        tokenExpiresAt = Date.now() + (response.data.expires_at ? response.data.expires_at * 1000 : 30 * 60 * 1000);
         console.log('✅ GigaChat token obtained');
         return gigachatAccessToken;
     } catch (error) {
@@ -85,6 +92,7 @@ async function callGigaChat(prompt: string): Promise<any | null> {
                 max_tokens: 1000,
             },
             {
+                httpsAgent, // используем агент без проверки сертификатов
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
