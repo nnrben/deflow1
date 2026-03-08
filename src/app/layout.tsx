@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers' // создадим ниже
+import Header from '@/components/layout/Header'
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] })
 
@@ -20,6 +21,7 @@ export default function RootLayout({
     <html lang="ru">
       <body className={inter.className}>
         <Providers>
+            <Header />
           <main className="container mx-auto px-4 py-6">
             {children}
           </main>
