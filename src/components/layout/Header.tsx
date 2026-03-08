@@ -13,7 +13,7 @@ export default async function Header() {
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         {/* Логотип */}
         <Link href="/" className="text-2xl font-bold text-blue-600">
-          PredictPlatform
+          TETA MARKET
         </Link>
 
         {/* Навигация */}
