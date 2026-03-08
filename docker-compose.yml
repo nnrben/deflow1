@@ -15,4 +15,8 @@ services:
       # Яндекс OAuth
       YANDEX_CLIENT_ID: ${YANDEX_CLIENT_ID}
       YANDEX_CLIENT_SECRET: ${YANDEX_CLIENT_SECRET}
+      # Ключи для ботов
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      BOT_API_SECRET: ${BOT_API_SECRET}
     restart: unless-stopped
