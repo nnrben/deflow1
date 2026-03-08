@@ -1,34 +1,124 @@
 import { PrismaClient } from '@prisma/client';
 import axios from 'axios';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const prisma = new PrismaClient();
 
 process.on('uncaughtException', (err) => {
     console.error('🔥 Uncaught Exception in forecast-generator:', err);
-    process.exit(1);
 });
 process.on('unhandledRejection', (reason, promise) => {
     console.error('⚠️ Unhandled Rejection in forecast-generator at:', promise, 'reason:', reason);
 });
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-if (!GEMINI_API_KEY) {
-    console.warn('⚠️ GEMINI_API_KEY not set, Gemini will not work');
-}
-const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
-const geminiModel = genAI?.getGenerativeModel({ model: 'gemini-1.5-pro' });
-
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-if (!OPENROUTER_API_KEY) {
-    console.warn('⚠️ OPENROUTER_API_KEY not set, OpenRouter fallback will not work');
-}
-
+// --- Настройки GigaChat ---
+const GIGACHAT_KEY = process.env.GIGACHAT_KEY;
 const BOT_API_SECRET = process.env.BOT_API_SECRET;
+
+if (!GIGACHAT_KEY) {
+    console.error('❌ GIGACHAT_KEY not set. Forecast generator cannot work.');
+    process.exit(1);
+}
 if (!BOT_API_SECRET) {
     console.warn('⚠️ BOT_API_SECRET not set, API calls will fail');
 }
 
+// Декодируем ключ (ожидается в формате base64 "client_id:client_secret")
+let GIGACHAT_CLIENT_ID = '';
+let GIGACHAT_CLIENT_SECRET = '';
+try {
+    const decoded = Buffer.from(GIGACHAT_KEY, 'base64').toString('utf8');
+    const parts = decoded.split(':');
+    if (parts.length === 2) {
+        GIGACHAT_CLIENT_ID = parts[0];
+        GIGACHAT_CLIENT_SECRET = parts[1];
+    } else {
+        throw new Error('Invalid GIGACHAT_KEY format');
+    }
+} catch (e) {
+    console.error('❌ Failed to parse GIGACHAT_KEY. It must be base64 of "client_id:client_secret"', e);
+    process.exit(1);
+}
+
+// Токен доступа GigaChat (получаем при каждом запуске и обновляем по необходимости)
+let gigachatAccessToken: string | null = null;
+let tokenExpiresAt = 0;
+
+async function ensureGigaChatToken() {
+    if (gigachatAccessToken && Date.now() < tokenExpiresAt) {
+        return gigachatAccessToken;
+    }
+    try {
+        const params = new URLSearchParams();
+        params.append('scope', 'GIGACHAT_API_PERS');
+
+        const response = await axios.post(
+            'https://ngw.devices.sberbank.ru:9443/api/v2/oauth',
+            params.toString(),
+            {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Accept': 'application/json',
+                    'Authorization': `Basic ${Buffer.from(`${GIGACHAT_CLIENT_ID}:${GIGACHAT_CLIENT_SECRET}`).toString('base64')}`,
+                },
+            }
+        );
+
+        gigachatAccessToken = response.data.access_token;
+        tokenExpiresAt = Date.now() + (response.data.expires_at ? response.data.expires_at * 1000 : 30 * 60 * 1000); // fallback 30 мин
+        console.log('✅ GigaChat token obtained');
+        return gigachatAccessToken;
+    } catch (error) {
+        console.error('❌ Failed to obtain GigaChat token:', error);
+        throw error;
+    }
+}
+
+async function callGigaChat(prompt: string): Promise<any | null> {
+    try {
+        const token = await ensureGigaChatToken();
+        const response = await axios.post(
+            'https://gigachat.devices.sberbank.ru/api/v1/chat/completions',
+            {
+                model: 'GigaChat',
+                messages: [{ role: 'user', content: prompt }],
+                temperature: 0.7,
+                max_tokens: 1000,
+            },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            }
+        );
+
+        const content = response.data.choices[0]?.message?.content;
+        if (!content) {
+            console.log('⚠️ Empty response from GigaChat');
+            return null;
+        }
+
+        console.log('📨 GigaChat raw response:', content.substring(0, 200));
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            return JSON.parse(jsonMatch[0]);
+        } else {
+            console.log('⚠️ No JSON found in response');
+            return null;
+        }
+    } catch (error: any) {
+        if (error.response && error.response.status === 401) {
+            console.warn('⚠️ Token expired, retrying...');
+            gigachatAccessToken = null; // принудительно обновим токен при следующем вызове
+        } else {
+            console.error('❌ GigaChat API error:', error.message);
+        }
+        return null;
+    }
+}
+
+// --- Промпт для генерации рынка ---
 const FORECAST_PROMPT = `Ты — аналитик на платформе рынков предсказаний. Прочитай новость и создай на её основе один вопрос для прогноза, который будет интересен и проверяем.
 
 Правила вопроса:
@@ -51,41 +141,7 @@ const FORECAST_PROMPT = `Ты — аналитик на платформе ры�
 
 async function generateMarketFromNews(newsTitle: string, newsContent: string) {
     const prompt = FORECAST_PROMPT.replace('{{новость}}', `Заголовок: ${newsTitle}\nТекст: ${newsContent}`);
-
-    if (geminiModel) {
-        try {
-            const result = await geminiModel.generateContent(prompt);
-            const response = await result.response;
-            const text = response.text();
-            const jsonMatch = text.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                return JSON.parse(jsonMatch[0]);
-            }
-        } catch (e) {
-            console.error('Gemini failed:', e);
-        }
-    }
-
-    if (OPENROUTER_API_KEY) {
-        try {
-            const openrouterResponse = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
-                model: 'anthropic/claude-3.5-sonnet',
-                messages: [{ role: 'user', content: prompt }],
-            }, {
-                headers: {
-                    'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-            const content = openrouterResponse.data.choices[0].message.content;
-            const jsonMatch = content.match(/\{[\s\S]*\}/);
-            if (jsonMatch) return JSON.parse(jsonMatch[0]);
-        } catch (e2) {
-            console.error('OpenRouter failed:', e2);
-        }
-    }
-
-    return null;
+    return await callGigaChat(prompt);
 }
 
 export async function processUnprocessedNews() {
@@ -116,8 +172,8 @@ export async function processUnprocessedNews() {
                 });
                 console.log(`✅ Market created: ${marketData.question.substring(0, 60)}...`);
                 created++;
-            } catch (error) {
-                console.error('❌ Error creating market:', error);
+            } catch (error: any) {
+                console.error('❌ Error creating market:', error.message);
             }
         } else {
             console.log(`⏩ No valid market generated for: ${item.title.substring(0, 60)}...`);
@@ -135,7 +191,7 @@ export async function processUnprocessedNews() {
 }
 
 export function startForecastGenerator() {
-    console.log('🤖 Forecast generator started');
+    console.log('🤖 Forecast generator started (GigaChat)');
 
     setTimeout(async () => {
         console.log('🔄 Immediate run on start');
