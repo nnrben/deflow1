@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && npm run build:services",
+    "build:services": "tsc --project tsconfig.services.json",
     "start": "next start",
     "lint": "eslint"
   },
@@ -44,10 +45,5 @@
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"
-  },
-  "scripts": {
-  "build:services": "tsc --project tsconfig.services.json",
-  "build": "next build && npm run build:services"
   }
-  
 }
