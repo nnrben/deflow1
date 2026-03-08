@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import BetForm from '@/components/markets/BetForm'
+import ResolveMarketButtons from '@/components/markets/ResolveMarketButtons'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 
@@ -33,6 +34,11 @@ export default async function MarketPage({ params }: PageProps) {
   const totalBets = market.bets.length
   const yesBets = market.bets.filter(b => b.outcome === true).length
   const yesPercentage = totalBets ? Math.round((yesBets / totalBets) * 100) : 0
+
+  // Суммы ставок для расчёта выигрыша
+  const totalYes = market.bets.filter(b => b.outcome).reduce((sum, b) => sum + b.amount, 0)
+  const totalNo = market.bets.filter(b => !b.outcome).reduce((sum, b) => sum + b.amount, 0)
+  const totalPool = totalYes + totalNo
 
   return (
     <div className="max-w-4xl mx-auto py-8">
@@ -90,6 +96,40 @@ export default async function MarketPage({ params }: PageProps) {
           )}
         </div>
       </div>
+
+      {/* Разрешение рынка (только для создателя) */}
+      {session?.user?.id === market.creatorId && market.status === 'ACTIVE' && new Date() > new Date(market.endDate) && (
+        <div className="mt-8 border rounded-lg p-4">
+          <h2 className="text-xl font-semibold mb-4">Разрешить рынок</h2>
+          <ResolveMarketButtons marketId={market.id} />
+        </div>
+      )}
+
+      {/* Отображение результатов, если рынок разрешён */}
+      {market.status === 'RESOLVED' && market.resolution !== null && (
+        <div className="mt-8 border rounded-lg p-4 bg-gray-50">
+          <h2 className="text-xl font-semibold mb-2">Рынок разрешён</h2>
+          <p className="mb-2">Правильный исход: <strong>{market.resolution ? 'ДА' : 'НЕТ'}</strong></p>
+          {session && (() => {
+            const userBet = market.bets.find(bet => bet.userId === session.user.id)
+            if (!userBet) return <p>Вы не участвовали в этом рынке.</p>
+            const userWon = userBet.outcome === market.resolution
+            if (userWon) {
+              const winningTotal = market.resolution ? totalYes : totalNo
+              const winAmount = Math.floor(userBet.amount * totalPool / winningTotal)
+              return (
+                <div>
+                  <p className="text-green-600 font-semibold">Вы выиграли!</p>
+                  <p>Ваша ставка: {userBet.amount} кредитов</p>
+                  <p>Выигрыш: {winAmount} кредитов</p>
+                </div>
+              )
+            } else {
+              return <p className="text-red-600">Вы проиграли. Ваша ставка: {userBet.amount} кредитов</p>
+            }
+          })()}
+        </div>
+      )}
     </div>
   )
 }
