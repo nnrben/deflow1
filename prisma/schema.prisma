@@ -88,6 +88,17 @@ model Bet {
   @@unique([userId, marketId])
 }
 
+model RawNews {
+    id          String   @id @default(cuid())
+    title       String   @unique
+    content     String
+    source      String
+    url         String?
+    publishedAt DateTime
+    processed   Boolean  @default(false)
+    createdAt   DateTime @default(now())
+}
+
 enum MarketStatus {
   ACTIVE
   RESOLVED
