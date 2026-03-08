@@ -13,6 +13,15 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const authHeader = req.headers.get('authorization');
+if (authHeader !== `Bearer ${process.env.BOT_API_SECRET}`) {
+    // Обычная проверка сессии для людей
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+}
+
   const { id: marketId } = await params 
   const body = await req.json()
   const parsed = betSchema.safeParse(body)
