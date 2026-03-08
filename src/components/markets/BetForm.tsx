@@ -73,7 +73,7 @@ export default function BetForm({ marketId, marketEndDate }: BetFormProps) {
           required
         />
       </div>
-      <Button type="submit" disabled={loading || !outcome || !amount}>
+      <Button type="submit" disabled={loading || outcome === null || !amount}>
         {loading ? 'Обработка...' : 'Поставить'}
       </Button>
     </form>
