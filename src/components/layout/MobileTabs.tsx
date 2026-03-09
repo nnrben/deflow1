@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import NewsBlock from '../news/NewsBlock';
 
 export default function MobileTabs() {
-  const [activeTab, setActiveTab] = useState<'news' | 'analytics'>('news');
+  const [activeTab, setActiveTab] = useState<'news' | 'analytics' | 'blog'>('news');
   const [headerHeight, setHeaderHeight] = useState(0);
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export default function MobileTabs() {
 
   return (
     <div>
-      {/* Липкая панель вкладок */}
+      {/* Панель вкладок */}
       <div
         style={{ position: 'sticky', top: headerHeight, zIndex: 10 }}
         className="bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800 mb-4"
@@ -50,15 +50,30 @@ export default function MobileTabs() {
           >
             Аналитика
           </button>
+          <button
+            className={`py-2 px-1 text-base font-medium transition-colors ${
+              activeTab === 'blog'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+            }`}
+            onClick={() => setActiveTab('blog')}
+          >
+            Блог
+          </button>
         </div>
       </div>
 
-      {/* Контент выбранной вкладки */}
+      {/* Контент */}
       <div>
         {activeTab === 'news' && <NewsBlock />}
         {activeTab === 'analytics' && (
           <div className="text-center py-10 text-gray-500 dark:text-gray-400">
             Раздел аналитика в разработке
+          </div>
+        )}
+        {activeTab === 'blog' && (
+          <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+            Раздел блог в разработке
           </div>
         )}
       </div>
