@@ -2,8 +2,7 @@
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
-import NewsBlock from '@/components/news/NewsBlock';
-import MobileTabs from '@/components/layout/MobileTabs';
+import HomeClient from './HomeClient';
 
 export default async function Home() {
   const session = await getServerSession();
@@ -17,21 +16,5 @@ export default async function Home() {
     take: 10,
   });
 
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2">
-      {/* Левая колонка */}
-      <div>{/* ваш контент */}</div>
-
-      {/* Правая колонка */}
-      <div className="lg:sticky lg:top-20 lg:self-start lg:max-h-screen lg:overflow-y-auto">
-        <div className="hidden lg:block">
-          <NewsBlock />
-        </div>
-        {/* На мобильных показываем табы*/}
-        <div className="block lg:hidden">
-          <MobileTabs />
-        </div>
-      </div>
-    </div>
-  );
+  return <HomeClient />;
 }

@@ -45,7 +45,7 @@ const socialLinks = [
 
 export default function Footer() {
   return (
-    <footer className="bg-gradient-to-br from-[#1f2937] to-[#111827] mt-auto">
+    <footer className="mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 md:py-12">
         {/* Социальные сети */}
         <div className="mb-8">
@@ -79,7 +79,7 @@ export default function Footer() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-gray-300 hover:text-black transition-colors"
+                      className="text-black hover:text-black transition-colors"
                     >
                       {link.label}
                     </Link>
@@ -92,7 +92,7 @@ export default function Footer() {
             <h3 className="text-lg font-bold mb-4 text-black">Контакты</h3>
             <a
               href="mailto:deflowru@mail.ru"
-              className="text-gray-300 hover:text-black transition-colors"
+              className="text-black hover:text-black transition-colors"
             >
               deflowru@mail.ru
             </a>
@@ -100,8 +100,8 @@ export default function Footer() {
         </div>
 
         {/* Дисклеймер */}
-        <div className="border-t border-gray-700 pt-6 mt-6">
-          <div className="text-xs text-gray-300 space-y-4">
+        <div className="border-t border-gray-800 pt-6 mt-6">
+          <div className="text-xs text-gray-800 space-y-4">
             <p>
               Аналитическая платформа DEFLOW представляет собой специализированный сервис для агрегации и анализа финансовой информации, собирая и систематизируя данные из множества источников, включая официальные биржевые отчетности, финансовые новости, аналитические обзоры и публичные данные о сделках с ценными бумагами и другими финансовыми инструментами.
             </p>
@@ -118,7 +118,7 @@ export default function Footer() {
         </div>
 
         {/* Копирайт */}
-        <div className="border-t border-gray-700 pt-6 mt-6 flex flex-col sm:flex-row justify-between items-center text-sm text-gray-300">
+        <div className="border-t border-gray-800 pt-6 mt-6 flex flex-col sm:flex-row justify-between items-center text-sm text-gray-800">
           <p>DEFLOW — Умные инструменты для трейдеров</p>
           <p>© {currentYear} DEFLOW. Все права защищены.</p>
         </div>
