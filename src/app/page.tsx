@@ -2,11 +2,10 @@
 import Link from 'next/link'
 import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
-import { Button } from '@/components/ui/Button'
-import MarketList from '@/components/markets/MarketList'
+import NewsBlock from '@/components/news/NewsBlock'
 
 export default async function Home() {
-  const session = await getServerSession() // можно не передавать, если не нужно
+  const session = await getServerSession()
   const markets = await prisma.market.findMany({
     include: {
       _count: {
@@ -18,18 +17,17 @@ export default async function Home() {
   })
 
   return (
-    <>
-      <h1 className="text-3xl font-bold mb-6">Активные рынки предсказаний</h1>
-      {markets.length > 0 ? (
-        <MarketList markets={markets} />
-      ) : (
-        <p className="text-gray-500">Пока нет созданных рынков. Будьте первым!</p>
-      )}
-      <div className="mt-8 text-center">
-        <Button asChild variant="outline">
-          <Link href="/markets">Посмотреть все рынки →</Link>
-        </Button>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Колонка 1 */}
+      <div>
+       
       </div>
-    </>
+
+      {/* Колонка 2*/}
+<div className="lg:sticky lg:top-20 lg:self-start lg:max-h-screen lg:overflow-y-auto">
+  <NewsBlock />
+</div>
+      
+    </div>
   )
 }

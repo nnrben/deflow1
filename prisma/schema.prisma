@@ -1,4 +1,3 @@
-// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,19 +9,35 @@ datasource db {
 
 model User {
   id            String   @id @default(cuid())
-  email         String   @unique
+  telegramId    String?  @unique
+  email         String?  @unique
   name          String?
   image         String?
   balance       Int      @default(1000)
   emailVerified DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  isBot      Boolean  @default(false)
-  // Связи
-  accounts      Account[]
-  sessions      Session[]
-  createdMarkets Market[] @relation("Creator")
-  bets          Bet[]
+  isBot         Boolean  @default(false)
+
+  phone         String?
+  unique_token      String?
+  username          String?
+  first_name        String?
+  photo_url         String?
+  tariff_plan       String?
+  tariff_type       String?
+  payment_date      String?
+  bybit_api_key     String?
+  bybit_api_secret  String?
+  alerts_diver      Boolean? @default(false)
+  referral_token    String?  @unique
+  referral_balance  Int?     @default(0)
+  referred_by       String?
+
+  accounts         Account[]
+  sessions         Session[]
+  createdMarkets   Market[] @relation("Creator")
+  bets             Bet[]
 }
 
 model Account {
@@ -89,14 +104,14 @@ model Bet {
 }
 
 model RawNews {
-    id          String   @id @default(cuid())
-    title       String   @unique
-    content     String
-    source      String
-    url         String?
-    publishedAt DateTime
-    processed   Boolean  @default(false)
-    createdAt   DateTime @default(now())
+  id          String   @id @default(cuid())
+  title       String   @unique
+  content     String
+  source      String
+  url         String?
+  publishedAt DateTime
+  processed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
 }
 
 enum MarketStatus {
