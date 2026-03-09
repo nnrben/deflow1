@@ -248,7 +248,7 @@ const NewsBlock: React.FC = () => {
 
   return (
 <div 
-  className="rounded-xl shadow-sm transition-all duration-500 ease-in-out"
+  className="transition-all duration-500 ease-in-out"
   style={{
     backgroundColor: colors.cardBg,
     color: colors.textPrimary
