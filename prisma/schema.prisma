@@ -38,6 +38,7 @@ model User {
   sessions         Session[]
   createdMarkets   Market[] @relation("Creator")
   bets             Bet[]
+  articles         Article[]
 }
 
 model Account {
@@ -112,6 +113,20 @@ model RawNews {
   publishedAt DateTime
   processed   Boolean  @default(false)
   createdAt   DateTime @default(now())
+}
+
+model Article {
+  id        String   @id @default(cuid())
+  title     String
+  contentMd String   @db.Text
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([authorId])
+  @@index([createdAt])
 }
 
 enum MarketStatus {
