@@ -137,7 +137,7 @@ export function ArticleComments({
                     type="button"
                     onClick={() => handleReply(comment.author?.name ?? null)}
                   >
-                    Ответить через @
+                    Ответить
                   </Button>
                 ) : null}
               </div>
